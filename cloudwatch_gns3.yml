@@ -1,0 +1,84 @@
+---
+- name: Instalar y Configurar AWS CloudWatch Agent
+  hosts: debian_web 
+  become: yes
+  vars:
+    # RECUERDA: Actualiza estas 3 variables con los datos de "AWS Details" de hoy
+    aws_access_key: ""
+    aws_secret_key: ""
+    aws_session_token: ""
+    aws_region: "us-east-1"
+
+  tasks:
+    - name: Descargar paquete en el disco de 20GB
+      get_url:
+        url: "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb"
+        dest: "/data-docker/tmp-descargas/amazon-cloudwatch-agent.deb"
+
+    - name: Instalar el agente de CloudWatch
+      apt:
+        deb: "/data-docker/tmp-descargas/amazon-cloudwatch-agent.deb"
+        state: present
+
+    - name: Crear directorio para credenciales de AWS
+      file:
+        path: /root/.aws
+        state: directory
+        mode: '0700'
+
+    # MODIFICACIÓN 1: Cambiamos el nombre del perfil a [default]
+    - name: Configurar credenciales de AWS para el agente
+      copy:
+        dest: /root/.aws/credentials
+        content: |
+          [default]
+          aws_access_key_id = {{ aws_access_key }}
+          aws_secret_access_key = {{ aws_secret_key }}
+          aws_session_token = {{ aws_session_token }}
+          region = {{ aws_region }}
+        mode: '0600'
+
+    # MODIFICACIÓN 2: Agregamos el archivo que le dice al agente que use esas credenciales
+    - name: Configurar common-config.toml para on-premise
+      copy:
+        dest: /opt/aws/amazon-cloudwatch-agent/etc/common-config.toml
+        content: |
+          [credentials]
+            shared_credential_profile = "default"
+            shared_credential_file = "/root/.aws/credentials"
+
+    # MODIFICACIÓN 3: JSON Limpio (sin espacios raros al inicio)
+    - name: Crear archivo de configuracion JSON para CloudWatch
+      copy:
+        dest: /opt/aws/amazon-cloudwatch-agent/bin/config.json
+        content: |
+          {
+            "agent": {
+              "metrics_collection_interval": 60,
+              "run_as_user": "root"
+            },
+            "metrics": {
+              "namespace": "GNS3/Web",
+              "metrics_collected": {
+                "cpu": {
+                  "measurement": ["cpu_usage_active"],
+                  "metrics_collection_interval": 60,
+                  "totalcpu": true
+                }
+              }
+            }
+          }
+
+    - name: Iniciar el agente con la nueva configuracion
+      command: /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m onPremise -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+
+    - name: Asegurar que el servicio este habilitado en el arranque
+      systemd:
+        name: amazon-cloudwatch-agent
+        enabled: yes
+        state: restarted # Usamos restarted para asegurar que tome los cambios de common-config
+
+    - name: Limpiar el instalador .deb
+      file:
+        path: "/data-docker/tmp-descargas/amazon-cloudwatch-agent.deb"
+        state: absent

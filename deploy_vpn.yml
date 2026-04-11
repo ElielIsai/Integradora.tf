@@ -1,0 +1,13 @@
+---
+- name: Configurar VPN Site-to-Site en Cisco IOS
+  hosts: routers
+  gather_facts: false
+  
+  # Aquí Ansible lee el archivo que Terraform creó
+  vars_files:
+    - vpn_vars.yml 
+
+  tasks:
+    - name: Generar configuracion final y enviarla al Router
+      cisco.ios.ios_config:
+        src: vpn_template.j2

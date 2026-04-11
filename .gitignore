@@ -1,0 +1,11 @@
+# Ignorar estado de Terraform (contiene secretos en texto plano)
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# Ignorar archivos de variables de entorno y generados
+.env
+vpn_vars.yml
+nameservers_godaddy.txt
+

@@ -1,0 +1,59 @@
+
+! --- IKEv2 Configuration ---
+crypto ikev2 proposal AWS_PROPOSAL
+ encryption aes-cbc-256
+ integrity sha1
+ group 2
+
+crypto ikev2 policy AWS_POLICY
+ proposal AWS_PROPOSAL
+
+crypto ikev2 keyring AWS_KEYRING
+ peer AWS_TUNNEL
+  address {{ tunnel_ip }}
+  pre-shared-key {{ tunnel_psk }}
+
+crypto ikev2 profile AWS_PROFILE
+ match identity remote any
+ identity local address {{ wan_ip }}
+ authentication remote pre-share
+ authentication local pre-share
+ keyring local AWS_KEYRING
+ dpd 10 5 periodic
+
+! --- IPsec Configuration ---
+crypto ipsec transform-set AWS_SET esp-aes 256 esp-sha-hmac
+ mode tunnel
+
+crypto ipsec profile AWS_PROFILE
+ set transform-set AWS_SET
+ set ikev2-profile AWS_PROFILE
+
+! --- Virtual Interface ---
+interface Tunnel1
+ description VPN AWS - Enlace Principal
+ ip address {{ internal_tunnel_ip }} 255.255.255.252
+ ip tcp adjust-mss 1360
+ tunnel source GigabitEthernet0/0
+ tunnel destination {{ tunnel_ip }}
+ tunnel mode ipsec ipv4
+ tunnel protection ipsec profile AWS_PROFILE
+ no shutdown
+
+! --- Routing BGP ---
+router bgp 65000
+ bgp log-neighbor-changes
+ neighbor {{ bgp_ip }} remote-as 64512
+ address-family ipv4
+  network 10.50.10.0 mask 255.255.255.0
+  network 10.50.20.0 mask 255.255.255.0
+  neighbor {{ bgp_ip }} activate
+ exit-address-family
+
+! --- NAT & Access Lists ---
+ip access-list extended ACL_NAT
+ deny ip host {{ wan_ip }} host {{ tunnel_ip }}
+ deny ip 10.0.0.0 0.255.255.255 200.200.200.0 0.0.0.255
+ deny ip 10.0.0.0 0.255.255.255 192.168.100.0 0.0.0.255
+ deny ip 10.0.0.0 0.255.255.255 20.0.0.0 0.0.255.255
+ permit ip 10.0.0.0 0.255.255.255 any
