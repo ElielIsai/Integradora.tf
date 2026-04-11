@@ -8,4 +8,4 @@
 .env
 vpn_vars.yml
 nameservers_godaddy.txt
-
+*.pem
