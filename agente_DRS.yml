@@ -1,0 +1,38 @@
+---
+- name: Instalar y Configurar AWS Elastic Disaster Recovery (DRS) Agent
+  hosts: debian_BD 
+  become: yes
+  vars:
+    # Estas variables vendrán de Jenkins (del nuevo output de Terraform)
+    aws_access_key_drs: "{{ aws_access_key_drs_env | default('') }}"
+    aws_secret_key_drs: "{{ aws_secret_key_drs_env | default('') }}"
+    aws_region: "us-east-1"
+
+  tasks:
+    - name: Asegurar que el directorio de descargas existe en el disco de 20GB
+      file:
+        path: "/data-docker/tmp-descargas"
+        state: directory
+        mode: '0755'
+
+    - name: Descargar el instalador de AWS DRS (Python script)
+      get_url:
+        url: "https://aws-elastic-disaster-recovery-{{ aws_region }}.s3.{{ aws_region }}.amazonaws.com/latest/linux/aws-replication-installer-init.py"
+        dest: "/data-docker/tmp-descargas/aws-replication-installer-init.py"
+        mode: '0755'
+
+    - name: Instalar el agente de DRS silenciosamente
+      # El script de python de AWS hace todo el trabajo pesado.
+      # Usamos --no-prompt para que no pida confirmación manual (ideal para Jenkins)
+      command: >
+        python3 /data-docker/tmp-descargas/aws-replication-installer-init.py 
+        --region {{ aws_region }} 
+        --aws-access-key-id {{ aws_access_key_drs }} 
+        --aws-secret-access-key {{ aws_secret_key_drs }} 
+        --no-prompt
+      register: drs_install_result
+      changed_when: "'Successfully installed' in drs_install_result.stdout"
+
+    - name: Mostrar resultado de la instalacion de DRS
+      debug:
+        msg: "{{ drs_install_result.stdout_lines }}"

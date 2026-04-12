@@ -63,6 +63,9 @@ pipeline {
                     script {
                         env.CW_KEY = sh(script: 'terraform output -raw cw_access_key', returnStdout: true).trim()
                         env.CW_SECRET = sh(script: 'terraform output -raw cw_secret_key', returnStdout: true).trim()
+                        env.DRS_KEY = sh(script: 'terraform output -raw drs_access_key', returnStdout: true).trim()
+                        env.DRS_SECRET = sh(script: 'terraform output -raw drs_secret_key', returnStdout: true).trim()
+
                     }
                 }
             }
@@ -73,7 +76,8 @@ pipeline {
                 // Sacamos las contraseñas locales de la bóveda
                 withCredentials([
                     string(credentialsId: 'ROUTER_PASS', variable: 'ROUTER_PASS'),
-                    string(credentialsId: 'DEBIAN_PASS', variable: 'DEBIAN_PASS')
+                    string(credentialsId: 'DEBIAN_PASS', variable: 'DEBIAN_PASS'),
+                    string(credentialsId: 'DEBIANBD_PASS', variable: 'DEBIANBD_PASS')
                 ]) {
                     sh 'chmod 400 llave-integradora.pem'
                     
@@ -89,6 +93,13 @@ pipeline {
                     -e 'aws_access_key_env=${env.CW_KEY}' \
                     -e 'aws_secret_key_env=${env.CW_SECRET}' \
                     -e 'pass_debian=${DEBIAN_PASS}'
+                    """
+
+                    sh """
+                    ansible-playbook -i hosts.ini agente_DRS.yml \
+                    -e 'aws_access_key_drs_env=${env.DRS_KEY}' \
+                    -e 'aws_secret_key_drs_env=${env.DRS_SECRET}' \
+                    -e 'pass_debianBD=${DEBIANBD_PASS}'
                     """
                 }
             }

@@ -19,11 +19,10 @@ pipeline {
 
         stage('Terraform Destroy') {
             steps {
-                // Confirmación manual por seguridad
-                input message: '¿ESTÁS SEGURO? Esto borrará toda tu red en AWS', ok: 'Sí, borrar todo'
-                
-                sh 'terraform init'
-                sh 'terraform destroy -auto-approve'
+                input message: '¿Borrar todo?', ok: 'Sí'
+                // El comando -refresh=true obliga a Terraform a mirar AWS antes de intentar borrar
+                sh 'terraform init -reconfigure' 
+                sh 'terraform destroy -auto-approve -refresh=true'
             }
         }
     }

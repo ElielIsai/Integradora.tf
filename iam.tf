@@ -24,3 +24,30 @@ output "cw_secret_key" {
   value     = aws_iam_access_key.cw_agent_keys.secret
   sensitive = true
 }
+
+# usuario para DRS
+
+resource "aws_iam_user" "drs_agent_user" {
+  name = "drs-agente-gns3"
+}
+
+resource "aws_iam_access_key" "drs_agent_keys" {
+  user = aws_iam_user.drs_agent_user.name
+}
+
+# Política oficial de AWS para instalar el agente de DRS
+resource "aws_iam_user_policy_attachment" "drs_agent_policy" {
+  user       = aws_iam_user.drs_agent_user.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSElasticDisasterRecoveryAgentInstallationPolicy"
+}
+
+# Exportar las llaves de DRS para Ansible
+output "drs_access_key" {
+  value     = aws_iam_access_key.drs_agent_keys.id
+  sensitive = true
+}
+
+output "drs_secret_key" {
+  value     = aws_iam_access_key.drs_agent_keys.secret
+  sensitive = true
+}
