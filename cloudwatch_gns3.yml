@@ -3,14 +3,20 @@
   hosts: debian_web 
   become: yes
   vars:
-    # RECUERDA: Actualiza estas 3 variables con los datos de "AWS Details" de hoy
-    aws_access_key: ""
-    aws_secret_key: ""
-    aws_session_token: ""
+    # Ansible tomará estos valores de las variables que le pasemos desde Jenkins
+    # Si no se pasan, quedarán vacías por seguridad
+    aws_access_key: "{{ aws_access_key_env | default('') }}"
+    aws_secret_key: "{{ aws_secret_key_env | default('') }}"
     aws_region: "us-east-1"
 
   tasks:
-    - name: Descargar paquete en el disco de 20GB
+    - name: Asegurar que el directorio de descargas existe
+      file:
+        path: "/data-docker/tmp-descargas"
+        state: directory
+        mode: '0755'
+
+    - name: Descargar paquete del agente
       get_url:
         url: "https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb"
         dest: "/data-docker/tmp-descargas/amazon-cloudwatch-agent.deb"
@@ -20,13 +26,12 @@
         deb: "/data-docker/tmp-descargas/amazon-cloudwatch-agent.deb"
         state: present
 
-    - name: Crear directorio para credenciales de AWS
+    - name: Crear directorio para credenciales de AWS (Root)
       file:
         path: /root/.aws
         state: directory
         mode: '0700'
 
-    # MODIFICACIÓN 1: Cambiamos el nombre del perfil a [default]
     - name: Configurar credenciales de AWS para el agente
       copy:
         dest: /root/.aws/credentials
@@ -34,12 +39,10 @@
           [default]
           aws_access_key_id = {{ aws_access_key }}
           aws_secret_access_key = {{ aws_secret_key }}
-          aws_session_token = {{ aws_session_token }}
           region = {{ aws_region }}
         mode: '0600'
 
-    # MODIFICACIÓN 2: Agregamos el archivo que le dice al agente que use esas credenciales
-    - name: Configurar common-config.toml para on-premise
+    - name: Configurar common-config.toml
       copy:
         dest: /opt/aws/amazon-cloudwatch-agent/etc/common-config.toml
         content: |
@@ -47,8 +50,7 @@
             shared_credential_profile = "default"
             shared_credential_file = "/root/.aws/credentials"
 
-    # MODIFICACIÓN 3: JSON Limpio (sin espacios raros al inicio)
-    - name: Crear archivo de configuracion JSON para CloudWatch
+    - name: Crear archivo de configuración JSON
       copy:
         dest: /opt/aws/amazon-cloudwatch-agent/bin/config.json
         content: |
@@ -69,16 +71,16 @@
             }
           }
 
-    - name: Iniciar el agente con la nueva configuracion
+    - name: Iniciar el agente con la configuración de On-Premise
       command: /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m onPremise -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
 
-    - name: Asegurar que el servicio este habilitado en el arranque
+    - name: Habilitar y reiniciar el servicio
       systemd:
         name: amazon-cloudwatch-agent
         enabled: yes
-        state: restarted # Usamos restarted para asegurar que tome los cambios de common-config
+        state: restarted
 
-    - name: Limpiar el instalador .deb
+    - name: Limpiar el instalador
       file:
         path: "/data-docker/tmp-descargas/amazon-cloudwatch-agent.deb"
         state: absent
