@@ -1,3 +1,9 @@
+# Le decimos a Terraform que adopte la plantilla que ya existe en AWS
+import {
+  to = aws_drs_replication_configuration_template.drs_template
+  id = "rct-327f502ac5380c302"
+}
+
 # 1. Grupo de Seguridad para los servidores de replicación de DRS
 resource "aws_security_group" "drs_sg" {
   name        = "drs-replication-sg"
