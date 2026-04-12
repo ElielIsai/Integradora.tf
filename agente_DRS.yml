@@ -9,19 +9,6 @@
     aws_region: "us-east-1"
 
   tasks:
-    - name: Crear carpeta para el agente en el disco grande
-      file:
-        path: "/data-docker/aws-agent-space"
-        state: directory
-        mode: '0755'
-
-    - name: Crear enlace simbolico para engañar al instalador
-      # Creamos la ruta donde AWS quiere instalarse, pero apuntando al disco de 20GB
-      file:
-        src: "/data-docker/aws-agent-space"
-        dest: "/var/lib/aws-replication-agent"
-        state: link
-        force: yes
 
     - name: Asegurar que el directorio de descargas existe en el disco de 20GB
       file:

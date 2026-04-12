@@ -1,0 +1,39 @@
+# 1. Grupo de Seguridad para los servidores de replicación de DRS
+resource "aws_security_group" "drs_sg" {
+  name        = "drs-replication-sg"
+  description = "Security group para servidores de DRS"
+  vpc_id      = aws_vpc.main_vpc.id 
+
+  # Regla de salida: Permite al servidor de DRS comunicarse con internet/AWS
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "drs-sg"
+  }
+}
+
+# 2. Inicialización de la plantilla de Elastic Disaster Recovery (DRS)
+resource "aws_drs_replication_configuration_template" "drs_template" {
+  
+  staging_area_subnet_id = aws_subnet.public_subnet_1.id 
+  
+  # Configuraciones estándar
+  associate_default_security_group = true
+  bandwidth_throttling             = 0
+  create_public_ip                 = true 
+  data_plane_routing               = "PUBLIC_IP" 
+  default_large_staging_disk_type  = "AUTO"
+  ebs_encryption                   = "DEFAULT"
+  replication_server_instance_type = "t3.small"
+  use_dedicated_replication_server        = false 
+  replication_servers_security_groups_ids = [aws_security_group.drs_sg.id]
+
+  staging_area_tags = {
+    Name = "DRS-Replication-Server"
+  }
+}
