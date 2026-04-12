@@ -56,18 +56,27 @@ pipeline {
 
         stage('Configurar Nodos con Ansible') {
             steps {
-                // 1. Damos permisos correctos a la llave que Terraform acaba de crear para que SSH no se queje
-                sh 'chmod 400 llave-integradora.pem'
-                
-                // 2. Ejecutamos el Playbook de CloudWatch pasándole las llaves dinámicas
-                sh """
-                ansible-playbook -i hosts.ini cloudwatch_gns3.yml \
-                -e "aws_access_key_env=${env.CW_KEY}" \
-                -e "aws_secret_key_env=${env.CW_SECRET}"
-                """
-                
-                // 3.  Ejecutamos Playbook de la VPN
-                sh 'ansible-playbook -i hosts.ini deploy_vpn.yml'
+                // Sacamos las contraseñas locales de la bóveda
+                withCredentials([
+                    string(credentialsId: 'ROUTER_PASS', variable: 'ROUTER_PASS'),
+                    string(credentialsId: 'DEBIAN_PASS', variable: 'DEBIAN_PASS')
+                ]) {
+                    sh 'chmod 400 llave-integradora.pem'
+                    
+                    // Ejecutamos Playbook de CloudWatch (Debian)
+                    sh """
+                    ansible-playbook -i hosts.ini cloudwatch_gns3.yml \
+                    -e "aws_access_key_env=${env.CW_KEY}" \
+                    -e "aws_secret_key_env=${env.CW_SECRET}" \
+                    -e "pass_debian=${DEBIAN_PASS}"
+                    """
+                    
+                    // Ejecutamos Playbook de VPN (Routers)
+                    sh """
+                    ansible-playbook -i hosts.ini deploy_vpn.yml \
+                    -e "pass_router=${ROUTER_PASS}"
+                    """
+                }
             }
         }
     }
