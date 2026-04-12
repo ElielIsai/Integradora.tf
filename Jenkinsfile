@@ -82,25 +82,25 @@ pipeline {
                     sh 'chmod 400 llave-integradora.pem'
                     
                     // Ejecutamos Playbook de VPN (Routers)
-                    sh """
+                    sh '''
                     ansible-playbook -i hosts.ini deploy_vpn.yml \
                     -e 'pass_router=${ROUTER_PASS}'
-                    """
+                    '''
 
                     // Ejecutamos Playbook de CloudWatch (Debian)
-                    sh """
+                    sh '''
                     ansible-playbook -i hosts.ini cloudwatch_gns3.yml \
                     -e 'aws_access_key_env=${env.CW_KEY}' \
                     -e 'aws_secret_key_env=${env.CW_SECRET}' \
                     -e 'pass_debian=${DEBIAN_PASS}'
-                    """
+                    '''
 
-                    sh """
+                    sh '''
                     ansible-playbook -i hosts.ini agente_DRS.yml \
                     -e 'aws_access_key_drs_env=${env.DRS_KEY}' \
                     -e 'aws_secret_key_drs_env=${env.DRS_SECRET}' \
                     -e 'pass_debianBD=${DEBIANBD_PASS}'
-                    """
+                    '''
                 }
             }
         }
