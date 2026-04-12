@@ -36,4 +36,30 @@ resource "aws_drs_replication_configuration_template" "drs_template" {
   staging_area_tags = {
     Name = "DRS-Replication-Server"
   }
+  # Regla 1: Retener un snapshot cada 10 minutos durante la última hora
+  pit_policy {
+    rule_id            = 1
+    units              = "MINUTE"
+    interval           = 10
+    retention_duration = 60 
+    enabled            = true
+  }
+
+  # Regla 2: Retener un snapshot cada hora durante las últimas 24 horas
+  pit_policy {
+    rule_id            = 2
+    units              = "HOUR"
+    interval           = 1
+    retention_duration = 24 
+    enabled            = true
+  }
+
+  # Regla 3: Retener un snapshot diario durante los últimos 7 días
+  pit_policy {
+    rule_id            = 3
+    units              = "DAY"
+    interval           = 1
+    retention_duration = 7 
+    enabled            = true
+  }
 }
