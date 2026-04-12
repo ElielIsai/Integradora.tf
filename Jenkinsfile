@@ -14,7 +14,9 @@ pipeline {
                 // Limpia el workspace de ejecuciones anteriores
                 deleteDir()
                 // Descarga tu repositorio de infraestructura
-                git branch: 'main', url: 'https://github.com/Eliellsai/Integradora.tf.git'
+                git branch: 'main', 
+                    credentialsId: 'ACCESO_REPO', 
+                    url: 'https://github.com/ElielIsai/Integradora.tf.git'
             }
         }
 
