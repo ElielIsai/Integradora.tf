@@ -6,7 +6,7 @@ terraform {
     } 
   }
   backend "s3" {
-    bucket = "estado-terraform.tfstate " 
+    bucket = "eterraform-estados-aws" 
     key    = "infraestructura/terraform.tfstate"
     region = "us-east-1"
   }

@@ -1,0 +1,36 @@
+pipeline {
+    agent any
+
+    environment {
+        // Mismas credenciales de AWS
+        AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
+    }
+
+    stages {
+        stage('Obtener Código') {
+            steps {
+                deleteDir()
+                git branch: 'main', 
+                    credentialsId: 'ACCESO_REPO', 
+                    url: 'https://github.com/ElielIsai/Integradora.tf.git'
+            }
+        }
+
+        stage('Terraform Destroy') {
+            steps {
+                // Confirmación manual por seguridad
+                input message: '¿ESTÁS SEGURO? Esto borrará toda tu red en AWS', ok: 'Sí, borrar todo'
+                
+                sh 'terraform init'
+                sh 'terraform destroy -auto-approve'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Proceso de destrucción finalizado."
+        }
+    }
+}
