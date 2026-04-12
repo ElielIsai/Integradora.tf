@@ -20,38 +20,50 @@ pipeline {
             }
         }
 
-        stage('Desplegar Infraestructura AWS (Terraform)') {
+        stage('Terraform: Fase 1 (Solo DNS)') {
             steps {
-                // Inyecta las credenciales temporales de AWS
                 withCredentials([
                     string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
                     string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
                     sh 'terraform init'
-                    
-                    echo "Aplicando infraestructura en AWS..."
-                    sh 'terraform apply -auto-approve'
-                    
-                    // EXTRAER LLAVES: Atrapamos las llaves del agente de CloudWatch que Terraform acaba de crear
-                    script {
-                        env.CW_KEY = sh(script: 'terraform output -raw cw_access_key', returnStdout: true).trim()
-                        env.CW_SECRET = sh(script: 'terraform output -raw cw_secret_key', returnStdout: true).trim()
-                    }
+                    echo "Creando SOLO la zona DNS para obtener los NameServers..."
+                    // Al apuntar al local_file, Terraform crea la zona Route53 automáticamente por dependencia
+                    sh 'terraform apply -target=local_file.godaddy_ns -target=aws_route53_zone.main -auto-approve'
                 }
             }
         }
 
         stage('Actualizar DNS en GoDaddy (Python)') {
             steps {
-                // Inyecta las credenciales de GoDaddy
                 withCredentials([
                     string(credentialsId: 'GODADDY_KEY_ID', variable: 'TF_VAR_godaddy_key'),
                     string(credentialsId: 'GODADDY_SECRET_ID', variable: 'TF_VAR_godaddy_secret')
                 ]) {
-                    // Asegura que la librería de Python esté instalada
                     sh 'pip install requests'
-                    // Ejecuta el script que lee el nameservers_godaddy.txt
+                    echo "Enviando NameServers a GoDaddy..."
                     sh 'python3 actualizacion_dns.py'
+                    // Le damos 30 segunditos a GoDaddy para que procese el cambio
+                    sleep 30 
+                }
+            }
+        }
+
+        stage('Terraform: Fase 2 (Resto de la Infraestructura)') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    echo "Desplegando EC2, VPN, ALB y validando ACM..."
+                    // Ahora corre completo. Como GoDaddy ya está actualizado, ACM validará rapidísimo.
+                    sh 'terraform apply -auto-approve'
+                    
+                    // Extraemos las llaves para Ansible
+                    script {
+                        env.CW_KEY = sh(script: 'terraform output -raw cw_access_key', returnStdout: true).trim()
+                        env.CW_SECRET = sh(script: 'terraform output -raw cw_secret_key', returnStdout: true).trim()
+                    }
                 }
             }
         }
