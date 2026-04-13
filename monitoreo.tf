@@ -8,7 +8,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_usado" {
   namespace           = "GNS3/Web" 
   period              = "60"
   statistic           = "Average"
-  threshold           = "2"
+  threshold           = "60" # Si el CPU supera el 60% durante 2 minutos
 
   alarm_description = "Esta alarma dispara el escalado en AWS si el server local sufre"
   alarm_actions     = [aws_autoscaling_policy.scale_up_policy.arn]
