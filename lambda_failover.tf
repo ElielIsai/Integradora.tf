@@ -15,7 +15,7 @@ resource "aws_lambda_function" "cambiar_pesos" {
 
   environment {
     variables = {
-      LISTENER_ARN = aws_lb_listener.https.arn
+      RULE_ARN     = aws_lb_listener_rule.ec2_overflow.arn
       WEB_TG_ARN   = aws_lb_target_group.web_tg.arn
       EC2_TG_ARN   = aws_lb_target_group.ec2_tg.arn
     }

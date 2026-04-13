@@ -95,11 +95,11 @@ resource "aws_lb_listener_rule" "ec2_overflow" {
     forward {
       target_group {
         arn    = aws_lb_target_group.web_tg.arn
-        weight = 0   # cuando escala, distribuye carga
+        weight = 100   # cuando escala, distribuye carga
       }
       target_group {
         arn    = aws_lb_target_group.ec2_tg.arn
-        weight = 100
+        weight = 0
       }
       stickiness {
         enabled  = true
