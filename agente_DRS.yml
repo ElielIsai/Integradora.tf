@@ -10,6 +10,15 @@
 
   tasks:
 
+    - name: Instalar dependencias (gcc, make, linux-headers) para compilar el agente
+      apt:
+        name:
+          - gcc
+          - make
+          - linux-headers-amd64
+        state: present
+        update_cache: yes
+
     - name: Asegurar que el directorio de descargas existe en el disco de 20GB
       file:
         path: "/data-docker/tmp-descargas"
@@ -22,7 +31,7 @@
         dest: "/data-docker/tmp-descargas/aws-replication-installer-init.py"
         mode: '0755'
 
-    - name: Instalar el agente de DRS silenciosamente
+    - name: Instalar el agente de DRS
       # El script de python de AWS hace todo el trabajo pesado.
       # Usamos --no-prompt para que no pida confirmación manual (ideal para Jenkins)
       command: >
