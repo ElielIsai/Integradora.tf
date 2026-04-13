@@ -36,9 +36,9 @@ resource "aws_launch_template" "web_launch_template" {
               cd /home/ec2-user
               git clone https://github.com/ElielIsai/Integradora.git
               cd Integradora
-
+              
               # Levantar los contenedores (NPM + Webs)
-              docker-compose up -d
+              docker-compose -f docker-compose.ec2.yml up -d
               EOF
   )
 }
