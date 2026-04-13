@@ -56,6 +56,7 @@ resource "aws_route_table_association" "private_assoc_2" {
   route_table_id = aws_route_table.private_rt.id
 }
 
+# Agregar ruta a internet para la tabla de ruteo privada a través del NAT Gateway
 resource "aws_route" "private_nat" {
   route_table_id         = aws_route_table.private_rt.id
   destination_cidr_block = "0.0.0.0/0"
