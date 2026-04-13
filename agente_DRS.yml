@@ -31,7 +31,7 @@
         dest: "/data-docker/tmp-descargas/aws-replication-installer-init.py"
         mode: '0755'
 
-    - name: Instalar el agente de DRS
+    - name: Instalar el agente de DRS usando el script de AWS
       # El script de python de AWS hace todo el trabajo pesado.
       # Usamos --no-prompt para que no pida confirmación manual (ideal para Jenkins)
       command: >
