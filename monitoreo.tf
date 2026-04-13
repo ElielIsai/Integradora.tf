@@ -40,11 +40,24 @@ resource "aws_cloudwatch_metric_alarm" "web_server_caido" {
   threshold           = "1" # Si 1 host (el local) está caído
 
   alarm_description = "Dispara el ASG si el servidor web de GNS3 deja de responder"
-  alarm_actions     = [aws_autoscaling_policy.scale_up_policy.arn]
+  alarm_actions = [
+    aws_autoscaling_policy.scale_up_policy.arn,
+    aws_sns_topic.failover_topic.arn    # agrega SNS para trigger Lambda
+  ]
 
   # Le decimos que vigile específicamente el Target Group de tu servidor local
   dimensions = {
     TargetGroup  = aws_lb_target_group.web_tg.arn_suffix
     LoadBalancer = aws_lb.main_alb.arn_suffix
   }
+}
+
+resource "aws_sns_topic" "failover_topic" {
+  name = "failover-gns3-a-ec2"
+}
+
+resource "aws_sns_topic_subscription" "lambda_sub" {
+  topic_arn = aws_sns_topic.failover_topic.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.cambiar_pesos.arn
 }
