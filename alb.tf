@@ -69,7 +69,6 @@ resource "aws_lb_listener" "front_end" {
   }
 }
 
-# Listener para HTTPS (Puerto 443)
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.main_alb.arn
   port              = "443"
@@ -77,17 +76,44 @@ resource "aws_lb_listener" "https" {
   ssl_policy        = "ELBSecurityPolicy-2016-08"
   certificate_arn   = aws_acm_certificate_validation.cert.certificate_arn
 
+  # Default: siempre va a GNS3
   default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.web_tg.arn
+  }
+}
+
+# regla que se activa SOLO cuando el ASG tiene instancias corriendo
+# esta regla tiene prioridad 1 (mayor que el default)
+# vía Lambda cambiando el peso
+resource "aws_lb_listener_rule" "ec2_overflow" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 1
+
+  action {
     type = "forward"
     forward {
       target_group {
-        arn    = aws_lb_target_group.web_tg.arn   # GNS3 (ip)
-        weight = 100
+        arn    = aws_lb_target_group.web_tg.arn
+        weight = 50   # cuando escala, distribuye carga
       }
       target_group {
-        arn    = aws_lb_target_group.ec2_tg.arn   # EC2 (instance)
-        weight = 0                                 # 0 = standby, sube al escalar
+        arn    = aws_lb_target_group.ec2_tg.arn
+        weight = 50
+      }
+      stickiness {
+        enabled  = true
+        duration = 300
       }
     }
   }
+
+  # Solo aplica esta regla cuando hay EC2 activas
+  # Condición: siempre activa, pero tú controlas si existe o no el recurso
+  condition {
+    path_pattern {
+      values = ["/*"]
+    }
+  }
 }
+

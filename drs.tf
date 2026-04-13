@@ -27,18 +27,22 @@ resource "aws_security_group" "drs_sg" {
 # 2. Inicialización de la plantilla de Elastic Disaster Recovery (DRS)
 resource "aws_drs_replication_configuration_template" "drs_template" {
   
-  staging_area_subnet_id = aws_subnet.public_subnet_1.id 
-  
+  staging_area_subnet_id = aws_subnet.private_subnet_1.id
+
   # Configuraciones estándar
   associate_default_security_group = true
   bandwidth_throttling             = 0
-  create_public_ip                 = true 
-  data_plane_routing               = "PUBLIC_IP" 
+  create_public_ip                 = false
+  data_plane_routing               = "PRIVATE_IP"
   default_large_staging_disk_type  = "AUTO"
   ebs_encryption                   = "DEFAULT"
   replication_server_instance_type = "t3.small"
   use_dedicated_replication_server        = false 
   replication_servers_security_groups_ids = [aws_security_group.drs_sg.id]
+
+ 
+
+
 
   staging_area_tags = {
     Name = "DRS-Replication-Server"
