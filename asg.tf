@@ -49,7 +49,7 @@ resource "aws_autoscaling_group" "web_asg" {
   min_size            = 0
   target_group_arns   = [aws_lb_target_group.ec2_tg.arn] 
   vpc_zone_identifier = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id] 
-  health_check_type         = "EC2"        # Usamos EC2 para las verificaciones de salud
+  health_check_type         = "ELB"        # Usamos EC2 para las verificaciones de salud
   health_check_grace_period = 300 
 
   launch_template {

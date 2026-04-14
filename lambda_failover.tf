@@ -17,7 +17,6 @@ resource "aws_lambda_function" "cambiar_pesos" {
       RULE_ARN   = aws_lb_listener_rule.ec2_overflow.arn
       WEB_TG_ARN = aws_lb_target_group.web_tg.arn
       EC2_TG_ARN = aws_lb_target_group.ec2_tg.arn
-      ASG_NAME   = aws_autoscaling_group.web_asg.name 
     }
   }
 }

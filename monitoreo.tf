@@ -16,7 +16,6 @@ resource "aws_cloudwatch_metric_alarm" "cpu_usado" {
     aws_sns_topic.failover_topic.arn # Lambda distribuye carga 50/50
   ]
   # Cuando baja el CPU: Lambda regresa pesos a 100/0
-  ok_actions = [aws_sns_topic.failover_topic.arn]
 
   dimensions = {
     host = "debian"
@@ -49,8 +48,6 @@ resource "aws_cloudwatch_metric_alarm" "web_server_caido" {
     aws_autoscaling_policy.scale_up_policy.arn,
     aws_sns_topic.failover_topic.arn # Lambda pone pesos 0/100
   ]
-  # Cuando GNS3 se recupera: Lambda regresa pesos a 100/0 (failback)
-  ok_actions = [aws_sns_topic.failover_topic.arn]
 
   dimensions = {
     TargetGroup  = aws_lb_target_group.web_tg.arn_suffix
