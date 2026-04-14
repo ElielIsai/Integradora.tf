@@ -82,9 +82,9 @@ pipeline {
                     sh 'chmod 400 llave-integradora.pem'
                     
                      //Ejecutamos Playbook de VPN (Routers)
-                    sh '''
-                    ansible-playbook -i hosts.ini deploy_vpn.yml \
-                     -e "pass_router=$ROUTER_PASS"
+                   // sh '''
+                 //   ansible-playbook -i hosts.ini deploy_vpn.yml \
+                    // -e "pass_router=$ROUTER_PASS"
                      '''
 
                      //Ejecutamos Playbook de CloudWatch (Debian)
