@@ -11,6 +11,14 @@ resource "aws_security_group" "drs_sg" {
   description = "Security group para servidores de DRS"
   vpc_id      = aws_vpc.main_vpc.id 
 
+  ingress {
+    description = "Permitir trafico de replicacion DRS desde Debian"
+    from_port   = 1500
+    to_port     = 1500
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"] 
+  }
+
   # Regla de salida: Permite al servidor de DRS comunicarse con internet/AWS
   egress {
     from_port   = 0
