@@ -6,7 +6,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_usado" {
   evaluation_periods  = "2"
   metric_name         = "cpu_usage_active"
   namespace           = "GNS3/Web"
-  period              = "10"
+  period              = "30"
   statistic           = "Average"
   threshold           = "60"
   alarm_description   = "CPU del servidor GNS3 supera 60% por 2 minutos"
