@@ -96,12 +96,12 @@ pipeline {
                      -e "pass_debian=$DEBIAN_PASS"
                      '''
 
-                    sh '''
-                    ansible-playbook -i hosts.ini agente_DRS.yml \
-                    -e "aws_access_key_drs_env=$DRS_KEY" \
-                    -e "aws_secret_key_drs_env=$DRS_SECRET" \
-                    -e "pass_debianBD=$DEBIANBD_PASS"
-                    '''
+                    //sh '''
+                   // ansible-playbook -i hosts.ini agente_DRS.yml \
+                   // -e "aws_access_key_drs_env=$DRS_KEY" \
+                   // -e "aws_secret_key_drs_env=$DRS_SECRET" \
+                   // -e "pass_debianBD=$DEBIANBD_PASS"
+                    //'''
                 }
             }
         }

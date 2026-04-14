@@ -49,7 +49,7 @@ resource "aws_lb_target_group" "ec2_tg" {
 
 resource "aws_lb_target_group_attachment" "gns3_server" {
   target_group_arn  = aws_lb_target_group.web_tg.arn
-  target_id         = "10.50.10.10" # La IP de tu Proxy en la red VPN
+  target_id         = "10.200.1.6" # La IP de tu Proxy en la red VPN
   port              = 80
   availability_zone = "all"
 }
