@@ -121,6 +121,8 @@ pipeline {
                           --source-server-id "s-353f0af8b6c1e5e1c" \
                           --staging-area-subnet-id "${subnetId}" \
                           --replication-servers-security-groups-ids "${sgId}" \
+                          --data-plane-routing PRIVATE_IP \
+                          --no-create-public-ip \
                           --region us-east-1
                         """
                         
