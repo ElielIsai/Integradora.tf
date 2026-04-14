@@ -40,7 +40,7 @@ resource "aws_cloudwatch_metric_alarm" "web_server_caido" {
   evaluation_periods  = "1"
   metric_name         = "UnHealthyHostCount"
   namespace           = "AWS/ApplicationELB"
-  period              = "10"
+  period              = "60"
   statistic           = "Maximum"
   threshold           = "1"
   alarm_description   = "El servidor GNS3 dejó de responder"
