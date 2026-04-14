@@ -18,7 +18,7 @@ resource "aws_lb_target_group" "web_tg" {
     path                = "/" # Asegúrate que tu Nginx en GNS3 responda 200 OK aquí
     protocol            = "HTTP"
     matcher             = "200-399" # Ampliamos el rango por si NPM hace redirecciones
-    interval            = 10
+    interval            = 30
     timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 2
@@ -40,7 +40,7 @@ resource "aws_lb_target_group" "ec2_tg" {
     path                = "/"
     protocol            = "HTTP"
     matcher             = "200-399"
-    interval            = 10
+    interval            = 30
     timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 3
