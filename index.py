@@ -1,44 +1,83 @@
-import boto3, os, json
-
-client = boto3.client('elbv2')
+import boto3, os
 
 def handler(event, context):
-    message    = json.loads(event['Records'][0]['Sns']['Message'])
-    alarm_name = message['AlarmName']
-    new_state  = message['NewStateValue']
-
-    rule_arn   = os.environ['RULE_ARN']
-    web_tg_arn = os.environ['WEB_TG_ARN']
-    ec2_tg_arn = os.environ['EC2_TG_ARN']
-
-    if new_state == 'ALARM':
-        if 'cpu' in alarm_name.lower():
-            w_web, w_ec2 = 50, 50
-            motivo = "escalado por CPU alto"
-        else:
-            w_web, w_ec2 = 0, 100
-            motivo = "caida del servidor GNS3"
-    else:
-        w_web, w_ec2 = 100, 0
-        motivo = "servidor GNS3 recuperado"
-
-    print(f"Alarma: {alarm_name} | Estado: {new_state} | Motivo: {motivo}")
-    print(f"Cambiando pesos -> GNS3={w_web}, EC2={w_ec2}")
-
-    client.modify_rule(
-        RuleArn=rule_arn,
-        Actions=[{
+    client = boto3.client('elbv2')
+    
+    # Cuando GNS3 cae: 0% GNS3, 100% EC2
+    client.modify_listener(
+        ListenerArn=os.environ['LISTENER_ARN'],
+        DefaultActions=[{
             'Type': 'forward',
             'ForwardConfig': {
                 'TargetGroups': [
-                    {'TargetGroupArn': web_tg_arn, 'Weight': w_web},
-                    {'TargetGroupArn': ec2_tg_arn, 'Weight': w_ec2},
-                ],
-                'TargetGroupStickinessConfig': {
-                    'Enabled': True,
-                    'DurationSeconds': 300
-                }
+                    {'TargetGroupArn': os.environ['WEB_TG_ARN'], 'Weight': 0},
+                    {'TargetGroupArn': os.environ['EC2_TG_ARN'], 'Weight': 100},
+                ]
             }
         }]
     )
-    return {'statusCode': 200, 'body': f'GNS3={w_web}, EC2={w_ec2}'}
+    return {'statusCode': 200} y este otro es el archivo.tf de la lambda # Empaqueta el index.py que está en la misma carpeta
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  source_file = "${path.module}/index.py"
+  output_path = "${path.module}/lambda_failover.zip"
+}
+
+resource "aws_lambda_function" "cambiar_pesos" {
+  function_name    = "failover-cambiar-pesos-alb"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "index.handler"
+  runtime          = "python3.11"
+  filename         = data.archive_file.lambda_zip.output_path
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+
+  environment {
+    variables = {
+      LISTENER_ARN = aws_lb_listener.https.arn
+      WEB_TG_ARN   = aws_lb_target_group.web_tg.arn
+      EC2_TG_ARN   = aws_lb_target_group.ec2_tg.arn
+    }
+  }
+}
+
+# Permiso para que SNS invoque la Lambda
+resource "aws_lambda_permission" "sns_invoke" {
+  statement_id  = "AllowSNSInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.cambiar_pesos.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.failover_topic.arn
+}
+
+# IAM Role para la Lambda
+resource "aws_iam_role" "lambda_role" {
+  name = "lambda-failover-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "lambda_alb_policy" {
+  name = "lambda-alb-policy"
+  role = aws_iam_role.lambda_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["elasticloadbalancing:ModifyListener", "elasticloadbalancing:DescribeListeners"]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = "*"
+      }
+    ]
+  })
+}
