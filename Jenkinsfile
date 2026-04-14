@@ -105,6 +105,35 @@ pipeline {
                 }
             }
         }
+        
+        stage('Actualizar Agente DRS') {
+            steps {
+                script {
+                    // 1. Extraer los IDs directamente de Terraform
+                    def subnetId = sh(script: 'terraform output -raw drs_subnet_id', returnStdout: true).trim()
+                    def sgId = sh(script: 'terraform output -raw drs_sg_id', returnStdout: true).trim()
+
+                    echo "Subnet obtenida: ${subnetId}"
+                    echo "Security Group obtenido: ${sgId}"
+
+                    // 2. Ejecutar el comando de AWS CLI con las variables inyectadas
+                    sh """
+                    aws drs update-replication-configuration \
+                      --source-server-id "s-353f0af8b6c1e5e1c" \
+                      --staging-area-subnet-id "${subnetId}" \
+                      --replication-servers-security-groups-ids "${sgId}" \
+                      --region us-east-1
+                    """
+                    
+                    // 3. Forzar el reinicio de la iniciación para que AWS tome los cambios de inmediato
+                    sh """
+                    aws drs start-replication \
+                      --source-server-id "s-353f0af8b6c1e5e1c" \
+                      --region us-east-1 || true
+                    """
+                }
+            }
+        }
     }
 
     post {
