@@ -11,6 +11,7 @@ def handler(event, context):
     rule_arn   = os.environ['RULE_ARN']
     web_tg_arn = os.environ['WEB_TG_ARN']
     ec2_tg_arn = os.environ['EC2_TG_ARN']
+    asg_name   = os.environ['ASG_NAME']
  
     if new_state == 'ALARM':
         if 'cpu' in alarm_name.lower():
@@ -25,6 +26,11 @@ def handler(event, context):
         # Servidor recuperado: regresar todo a GNS3
         w_web, w_ec2 = 100, 0
         motivo = "servidor GNS3 recuperado (failback)"
+        client_asg.update_auto_scaling_group(
+            AutoScalingGroupName=asg_name,
+            MinSize=0,
+            DesiredCapacity=0
+        )
  
     print(f"Alarma: {alarm_name} | Estado: {new_state} | Motivo: {motivo}")
     print(f"Cambiando pesos → GNS3={w_web}, EC2={w_ec2}")
