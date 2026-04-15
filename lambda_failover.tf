@@ -1,4 +1,3 @@
-# Empaqueta el index.py que está en la misma carpeta
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_file = "${path.module}/index.py"
@@ -15,14 +14,13 @@ resource "aws_lambda_function" "cambiar_pesos" {
 
   environment {
     variables = {
-      LISTENER_ARN = aws_lb_listener.https.arn
-      WEB_TG_ARN   = aws_lb_target_group.web_tg.arn
-      EC2_TG_ARN   = aws_lb_target_group.ec2_tg.arn
+      RULE_ARN   = aws_lb_listener_rule.ec2_overflow.arn
+      WEB_TG_ARN = aws_lb_target_group.web_tg.arn
+      EC2_TG_ARN = aws_lb_target_group.ec2_tg.arn
     }
   }
 }
 
-# Permiso para que SNS invoque la Lambda
 resource "aws_lambda_permission" "sns_invoke" {
   statement_id  = "AllowSNSInvoke"
   action        = "lambda:InvokeFunction"
@@ -31,7 +29,6 @@ resource "aws_lambda_permission" "sns_invoke" {
   source_arn    = aws_sns_topic.failover_topic.arn
 }
 
-# IAM Role para la Lambda
 resource "aws_iam_role" "lambda_role" {
   name = "lambda-failover-role"
   assume_role_policy = jsonencode({
@@ -51,13 +48,21 @@ resource "aws_iam_role_policy" "lambda_alb_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = ["elasticloadbalancing:ModifyListener", "elasticloadbalancing:DescribeListeners"]
+        Effect = "Allow"
+        Action = [
+          "elasticloadbalancing:ModifyRule",
+          "elasticloadbalancing:DescribeRules",
+          "elasticloadbalancing:DescribeTargetGroups"
+        ]
         Resource = "*"
       },
       {
-        Effect   = "Allow"
-        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
         Resource = "*"
       }
     ]

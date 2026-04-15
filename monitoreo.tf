@@ -1,21 +1,19 @@
-
-# Alarma CPU alto → escalar + distribuir carga
+# Alarma CPU alto → escalar + distribuir carga 50/50
 resource "aws_cloudwatch_metric_alarm" "cpu_usado" {
   alarm_name          = "cpu-gns3-server"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = "2"
   metric_name         = "cpu_usage_active"
   namespace           = "GNS3/Web"
-  period              = "30"
+  period              = "60"
   statistic           = "Average"
   threshold           = "60"
-  alarm_description   = "CPU del servidor GNS3 supera 60% por 2 minutos"
+  alarm_description   = "CPU del servidor GNS3 supera 60%"
 
   alarm_actions = [
     aws_autoscaling_policy.scale_up_policy.arn,
-    aws_sns_topic.failover_topic.arn # Lambda distribuye carga 50/50
+    aws_sns_topic.failover_topic.arn
   ]
-  # Cuando baja el CPU: Lambda regresa pesos a 100/0
 
   dimensions = {
     host = "debian"
@@ -23,7 +21,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_usado" {
   }
 }
 
-# Política de escalado para el ASG
+# Política de escalado del ASG
 resource "aws_autoscaling_policy" "scale_up_policy" {
   name                   = "scale-up-policy"
   scaling_adjustment     = 1
@@ -42,11 +40,11 @@ resource "aws_cloudwatch_metric_alarm" "web_server_caido" {
   period              = "60"
   statistic           = "Maximum"
   threshold           = "1"
-  alarm_description   = "El servidor GNS3 dejó de responder"
+  alarm_description   = "El servidor GNS3 dejo de responder"
 
   alarm_actions = [
     aws_autoscaling_policy.scale_up_policy.arn,
-    aws_sns_topic.failover_topic.arn # Lambda pone pesos 0/100
+    aws_sns_topic.failover_topic.arn
   ]
 
   dimensions = {
