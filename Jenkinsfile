@@ -106,35 +106,35 @@ pipeline {
             }
         }
 
-        stage('Actualizar Agente DRS') {
-            steps {
-                withCredentials([
-                    string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
-                    string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
-                ]) {
-                    script {
-                        def subnetId = sh(script: 'terraform output -raw drs_subnet_id', returnStdout: true).trim()
-                        def sgId = sh(script: 'terraform output -raw drs_sg_id', returnStdout: true).trim()
+       // stage('Actualizar Agente DRS') {
+           // steps {
+             //   withCredentials([
+               //     string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
+                //    string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
+               // ]) {
+                   // script {
+                      //  def subnetId = sh(script: 'terraform output -raw drs_subnet_id', returnStdout: true).trim()
+                      //  def sgId = sh(script: 'terraform output -raw drs_sg_id', returnStdout: true).trim()
 
-                        sh """
-                        aws drs update-replication-configuration \
-                          --source-server-id "s-353f0af8b6c1e5e1c" \
-                          --staging-area-subnet-id "${subnetId}" \
-                          --replication-servers-security-groups-ids "${sgId}" \
-                          --data-plane-routing PRIVATE_IP \
-                          --no-create-public-ip \
-                          --region us-east-1
-                        """
+                       // sh """
+                       // aws drs update-replication-configuration \
+                       //   --source-server-id "s-353f0af8b6c1e5e1c" \
+                       //   --staging-area-subnet-id "${subnetId}" \
+                       //   --replication-servers-security-groups-ids "${sgId}" \
+                        //  --data-plane-routing PRIVATE_IP \
+                       //   --no-create-public-ip \
+                      //    --region us-east-1
+                     //   """
                         
-                        sh """
-                        aws drs start-replication \
-                          --source-server-id "s-353f0af8b6c1e5e1c" \
-                          --region us-east-1 || true
-                        """
-                    }
-                }
-            }
-        }
+                   //     sh """
+                  //      aws drs start-replication \
+                 //         --source-server-id "s-353f0af8b6c1e5e1c" \
+                //          --region us-east-1 || true
+                  //      """
+              //       }
+              //  }
+           // }
+      //  }
     }
 
     post {
