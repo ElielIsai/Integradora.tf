@@ -15,7 +15,7 @@ resource "aws_launch_template" "web_launch_template" {
   key_name = aws_key_pair.deployer.key_name
 
   network_interfaces {
-    associate_public_ip_address = false # Cambia a true si no usas NAT Gateway y necesitas internet
+    associate_public_ip_address = false # No asignamos IP pública directamente, el ALB se encargará de enrutar el tráfico
     security_groups             = [aws_security_group.web_sg.id]
   }
 
