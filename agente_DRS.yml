@@ -33,7 +33,7 @@
         --aws-access-key-id {{ aws_access_key_drs }} 
         --aws-secret-access-key {{ aws_secret_key_drs }} 
         --no-prompt
-        --disks /dev/sda
+        --devices /dev/sda
       register: drs_install_result
       changed_when: "'Successfully installed' in drs_install_result.stdout"
 
