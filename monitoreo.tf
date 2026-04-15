@@ -56,9 +56,3 @@ resource "aws_cloudwatch_metric_alarm" "web_server_caido" {
 resource "aws_sns_topic" "failover_topic" {
   name = "failover-gns3-a-ec2"
 }
-
-resource "aws_sns_topic_subscription" "lambda_sub" {
-  topic_arn = aws_sns_topic.failover_topic.arn
-  protocol  = "lambda"
-  endpoint  = aws_lambda_function.cambiar_pesos.arn
-}
