@@ -50,6 +50,9 @@ router bgp 65000
   neighbor {{ bgp_ip }} activate
  exit-address-family
 
+router bgp 65000
+ redistribute ospf 1
+
 ! --- NAT & Access Lists ---
 ip access-list extended ACL_NAT
  deny ip host {{ wan_ip }} host {{ tunnel_ip }}
