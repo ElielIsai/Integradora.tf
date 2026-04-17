@@ -14,7 +14,6 @@ resource "aws_iam_user_policy_attachment" "cw_agent_policy" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
-# 4. (Opcional) Exportar las llaves a un archivo para que Ansible las lea o verlas en el output
 output "cw_access_key" {
   value     = aws_iam_access_key.cw_agent_keys.id
   sensitive = true

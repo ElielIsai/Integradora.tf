@@ -6,7 +6,7 @@ resource "aws_lb" "main_alb" {
   subnets            = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id] # 
 }
 
-resource "aws_lb_target_group" "web_tg" {
+resource "aws_lb_target_group" "web_tg" { 
   name        = "web-tg-ip"
   port        = 80
   protocol    = "HTTP"
@@ -15,7 +15,7 @@ resource "aws_lb_target_group" "web_tg" {
 
 
   health_check {
-    path                = "/" # Asegúrate que tu Nginx en GNS3 responda 200 OK aquí
+    path                = "/" # Ruta para el health check, puede ser cualquier endpoint que devuelva 200 OK
     protocol            = "HTTP"
     matcher             = "200-399" # Ampliamos el rango por si NPM hace redirecciones
     interval            = 30
@@ -34,7 +34,7 @@ resource "aws_lb_target_group" "ec2_tg" {
   port        = 80
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main_vpc.id
-  target_type = "instance"        # ← compatible con ASG
+  target_type = "instance"       
 
   health_check {
     path                = "/"
@@ -49,7 +49,7 @@ resource "aws_lb_target_group" "ec2_tg" {
 
 resource "aws_lb_target_group_attachment" "gns3_server" {
   target_group_arn  = aws_lb_target_group.web_tg.arn
-  target_id         = "10.200.1.6" # La IP de tu Proxy en la red VPN
+  target_id         = "10.200.1.6" # IP privada del servidor GNS3
   port              = 80
   availability_zone = "all"
 }
@@ -84,8 +84,6 @@ resource "aws_lb_listener" "https" {
 }
 
 # regla que se activa SOLO cuando el ASG tiene instancias corriendo
-# esta regla tiene prioridad 1 (mayor que el default)
-# vía Lambda cambiando el peso
 resource "aws_lb_listener_rule" "ec2_overflow" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 1

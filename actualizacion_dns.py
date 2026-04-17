@@ -1,5 +1,5 @@
 import os, json, requests
-# Eliminamos load_dotenv porque Jenkins inyectará las variables directamente
+
 
 # Jenkins pasará estas variables a través del bloque withCredentials
 DOMAIN = os.getenv("DOMAIN")
@@ -9,7 +9,6 @@ API_SECRET = os.getenv("TF_VAR_godaddy_secret")
 # LEER LOS NAMESERVERS DE TERRAFORM
 ns_list = []
 try:
-    # Asegúrate de que este archivo se genere en la raíz del workspace de Jenkins
     with open("nameservers_godaddy.txt", "r") as file:
         for line in file:
             line = line.strip()
