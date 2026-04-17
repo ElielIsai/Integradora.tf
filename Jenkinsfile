@@ -56,7 +56,7 @@ pipeline {
                     string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
                 ]) {
                     echo "Desplegando EC2, VPN, ALB y validando ACM..."
-                    // Ahora corre completo. Como GoDaddy ya está actualizado, ACM validará rapidísimo.
+                    // Ahora corre completo. Como GoDaddy ya está actualizado, ACM validará rapido.
                     sh 'terraform apply -auto-approve'
                     
                     // Extraemos las llaves para Ansible
@@ -87,8 +87,8 @@ pipeline {
                    //  -e "pass_router=$ROUTER_PASS"
                    //  '''
 
-                     Ejecutamos Playbook de CloudWatch (Debian)
-                      Nota: Asegúrate de que CW_KEY y CW_SECRET estén definidos en el bloque environment o capturados arriba
+                     //Ejecutamos Playbook de CloudWatch (Debian)
+                    
                      sh '''
                      ansible-playbook -i hosts.ini cloudwatch_gns3.yml \
                       -e "aws_access_key_env=$CW_KEY" \
